@@ -944,25 +944,8 @@ static init_fnc_t init_sequence_f[] = {
 
 #else
 static init_fnc_t init_sequence_f[] = {
-#ifdef CONFIG_SANDBOX
-	setup_ram_buf,
-#endif
 	setup_mon_len,
-#ifdef CONFIG_OF_CONTROL
-	fdtdec_setup,
-#endif
-#ifdef CONFIG_TRACE
-	trace_early_init,
-#endif
 	initf_malloc,
-	initf_console_record,
-#if defined(CONFIG_MPC85xx) || defined(CONFIG_MPC86xx)
-	/* TODO: can this go into arch_cpu_init()? */
-	probecpu,
-#endif
-#if defined(CONFIG_X86) && defined(CONFIG_HAVE_FSP)
-	x86_fsp_init,
-#endif
 	arch_cpu_init,		/* basic arch cpu dependent setup */
 	mach_cpu_init,		/* SoC/machine dependent CPU setup */
 	initf_dm,
@@ -971,25 +954,10 @@ static init_fnc_t init_sequence_f[] = {
 #if defined(CONFIG_BOARD_EARLY_INIT_F)
 	board_early_init_f,
 #endif
-	/* TODO: can any of this go into arch_cpu_init()? */
-#if defined(CONFIG_PPC) && !defined(CONFIG_8xx_CPUCLK_DEFAULT)
-	get_clocks,		/* get CPU and bus clocks (etc.) */
-#if defined(CONFIG_TQM8xxL) && !defined(CONFIG_TQM866M) \
-		&& !defined(CONFIG_TQM885D)
-	adjust_sdram_tbs_8xx,
-#endif
-	/* TODO: can we rename this to timer_init()? */
-	init_timebase,
-#endif
 #if defined(CONFIG_ARM) || defined(CONFIG_MIPS) || \
 		defined(CONFIG_BLACKFIN) || defined(CONFIG_NDS32) || \
 		defined(CONFIG_SPARC)
 	timer_init,		/* initialize timer */
-#endif
-#ifdef CONFIG_SYS_ALLOC_DPRAM
-#if !defined(CONFIG_CPM2)
-	dpram_init,
-#endif
 #endif
 #if defined(CONFIG_BOARD_POSTCLK_INIT)
 	board_postclk_init,
@@ -998,48 +966,14 @@ static init_fnc_t init_sequence_f[] = {
 	get_clocks,
 #endif
 	env_init,		/* initialize environment */
-#if defined(CONFIG_8xx_CPUCLK_DEFAULT)
-	/* get CPU and bus clocks according to the environment variable */
-	get_clocks_866,
-	/* adjust sdram refresh rate according to the new clock */
-	sdram_adjust_866,
-	init_timebase,
-#endif
 	init_baud_rate,		/* initialze baudrate settings */
 	serial_init,		/* serial communications setup */
 	console_init_f,		/* stage 1 init of console */
-#ifdef CONFIG_SANDBOX
-	sandbox_early_getopt_check,
-#endif
 	display_options,	/* say that we are here */
 	display_text_info,	/* show debugging info if required */
-#if defined(CONFIG_MPC8260)
-	prt_8260_rsr,
-	prt_8260_clks,
-#endif /* CONFIG_MPC8260 */
-#if defined(CONFIG_MPC83xx)
-	prt_83xx_rsr,
-#endif
-#if defined(CONFIG_PPC) || defined(CONFIG_M68K)
-	checkcpu,
-#endif
 	print_cpuinfo,		/* display cpu info (and speed) */
-#if defined(CONFIG_MPC5xxx)
-	prt_mpc5xxx_clks,
-#endif /* CONFIG_MPC5xxx */
 #if defined(CONFIG_DISPLAY_BOARDINFO)
 	show_board_info,
-#endif
-	INIT_FUNC_WATCHDOG_INIT
-#if defined(CONFIG_MISC_INIT_F)
-	misc_init_f,
-#endif
-	INIT_FUNC_WATCHDOG_RESET
-#if defined(CONFIG_HARD_I2C) || defined(CONFIG_SYS_I2C)
-	init_func_i2c,
-#endif
-#if defined(CONFIG_HARD_SPI)
-	init_func_spi,
 #endif
 	announce_dram_init,
 	/* TODO: unify all these dram functions? */
@@ -1047,22 +981,6 @@ static init_fnc_t init_sequence_f[] = {
 		defined(CONFIG_MICROBLAZE) || defined(CONFIG_AVR32)
 	dram_init,		/* configure available RAM banks */
 #endif
-#if defined(CONFIG_MIPS) || defined(CONFIG_PPC) || defined(CONFIG_M68K)
-	init_func_ram,
-#endif
-#ifdef CONFIG_POST
-	post_init_f,
-#endif
-	INIT_FUNC_WATCHDOG_RESET
-#if defined(CONFIG_SYS_DRAM_TEST)
-	testdram,
-#endif /* CONFIG_SYS_DRAM_TEST */
-	INIT_FUNC_WATCHDOG_RESET
-
-#ifdef CONFIG_POST
-	init_post,
-#endif
-	INIT_FUNC_WATCHDOG_RESET
 	/*
 	 * Now that we have DRAM mapped and working, we can
 	 * relocate the code and continue running from DRAM.
@@ -1076,38 +994,11 @@ static init_fnc_t init_sequence_f[] = {
 	 *  - board info struct
 	 */
 	setup_dest_addr,
-#if defined(CONFIG_BLACKFIN) || defined(CONFIG_XTENSA)
-	/* Blackfin u-boot monitor should be on top of the ram */
-	reserve_uboot,
-#endif
-#if defined(CONFIG_SPARC)
-	reserve_prom,
-#endif
-#if defined(CONFIG_LOGBUFFER) && !defined(CONFIG_ALT_LB_ADDR)
-	reserve_logbuffer,
-#endif
-#ifdef CONFIG_PRAM
-	reserve_pram,
-#endif
 	reserve_round_4k,
 #if !(defined(CONFIG_SYS_ICACHE_OFF) && defined(CONFIG_SYS_DCACHE_OFF)) && \
 		defined(CONFIG_ARM)
 	reserve_mmu,
 #endif
-#ifdef CONFIG_DM_VIDEO
-	reserve_video,
-#else
-# ifdef CONFIG_LCD
-	reserve_lcd,
-# endif
-	/* TODO: Why the dependency on CONFIG_8xx? */
-# if defined(CONFIG_VIDEO) && (!defined(CONFIG_PPC) || defined(CONFIG_8xx)) && \
-		!defined(CONFIG_ARM) && !defined(CONFIG_X86) && \
-		!defined(CONFIG_BLACKFIN) && !defined(CONFIG_M68K)
-	reserve_legacy_video,
-# endif
-#endif /* CONFIG_DM_VIDEO */
-	reserve_trace,
 #if !defined(CONFIG_BLACKFIN) && !defined(CONFIG_XTENSA)
 	reserve_uboot,
 #endif
@@ -1117,36 +1008,10 @@ static init_fnc_t init_sequence_f[] = {
 #endif
 	setup_machine,
 	reserve_global_data,
-	reserve_fdt,
-	reserve_arch,
-	reserve_stacks,
 	setup_dram_config,
 	show_dram_config,
-#if defined(CONFIG_PPC) || defined(CONFIG_M68K) || defined(CONFIG_MIPS)
-	setup_board_part1,
-#endif
-#if defined(CONFIG_PPC) || defined(CONFIG_M68K)
-	INIT_FUNC_WATCHDOG_RESET
-	setup_board_part2,
-#endif
 	display_new_sp,
-#ifdef CONFIG_SYS_EXTBDINFO
-	setup_board_extra,
-#endif
-	INIT_FUNC_WATCHDOG_RESET
-	reloc_fdt,
 	setup_reloc,
-#if defined(CONFIG_X86) || defined(CONFIG_ARC)
-	copy_uboot_to_ram,
-	clear_bss,
-	do_elf_reloc_fixups,
-#endif
-#if defined(CONFIG_XTENSA)
-	clear_bss,
-#endif
-#if !defined(CONFIG_ARM) && !defined(CONFIG_SANDBOX)
-	jump_to_copy,
-#endif
 	NULL,
 };
 #endif
