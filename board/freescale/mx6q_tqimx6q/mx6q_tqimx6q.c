@@ -96,6 +96,12 @@ static iomux_v3_cfg_t const enet_pads[] = {
 	MX6_PAD_RGMII_RD2__RGMII_RD2	| MUX_PAD_CTRL(ENET_PAD_CTRL),
 	MX6_PAD_RGMII_RD3__RGMII_RD3	| MUX_PAD_CTRL(ENET_PAD_CTRL),
 	MX6_PAD_RGMII_RX_CTL__RGMII_RX_CTL	| MUX_PAD_CTRL(ENET_PAD_CTRL),
+
+    /* Reset */
+    MX6_PAD_ENET_CRS_DV__GPIO1_IO25 | MUX_PAD_CTRL(NO_PAD_CTRL),
+
+    /* INT */
+    MX6_PAD_ENET_RXD1__GPIO1_IO26   | MUX_PAD_CTRL(NO_PAD_CTRL),
 };
 
 /* I2C2 PMIC, iPod, Tuner, Codec, Touch, HDMI EDID, MIPI CSI2 card */
@@ -249,6 +255,12 @@ static void setup_iomux_eimnor(void)
 static void setup_iomux_enet(void)
 {
 	imx_iomux_v3_setup_multiple_pads(enet_pads, ARRAY_SIZE(enet_pads));
+
+    /* reset AR8035 */
+    gpio_direction_output(IMX_GPIO_NR(1, 25), 0);
+    mdelay(10);
+    gpio_set_value(IMX_GPIO_NR(1, 25), 1);
+    udelay(100);
 }
 
 static iomux_v3_cfg_t const usdhc2_pads[] = {
@@ -321,6 +333,31 @@ static void setup_gpmi_nand(void)
 }
 #endif
 
+static int ar8035_phy_fixup(struct phy_device *phydev)
+{
+    unsigned short val;
+
+    //phy_write(phydev, MDIO_DEVAD_NONE, 0x0d, 0x07);
+    //phy_write(phydev, MDIO_DEVAD_NONE, 0x0e, 0x8016);
+    //phy_write(phydev, MDIO_DEVAD_NONE, 0x0d, 0x4007);
+
+    val = phy_read(phydev, MDIO_DEVAD_NONE, 0x00);
+    //printf("phy_0 value: 0x%x\n", val);
+    //printf("phy_1 value: 0x%x\n", phy_read(phydev, MDIO_DEVAD_NONE, 0x01));
+    
+    return 0;
+}
+
+int board_phy_config(struct phy_device *phydev)
+{
+    ar8035_phy_fixup(phydev);
+
+    if (phydev->drv->config)
+        phydev->drv->config(phydev);
+
+    return 0;
+}
+
 static void setup_fec(void)
 {
 	if (is_mx6dqp()) {
@@ -337,7 +374,7 @@ static void setup_fec(void)
 
 int board_eth_init(bd_t *bis)
 {
-	setup_fec();
+    setup_iomux_enet();
 
 	return cpu_eth_init(bis);
 }
@@ -531,21 +568,10 @@ int board_init(void)
 	/* address of boot parameters */
 	gd->bd->bi_boot_params = PHYS_SDRAM + 0x100;
 
-	/* I2C 2 and 3 setup - I2C 3 hw mux with EIM */
-	setup_i2c(1, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info1);
-	/* I2C 3 Steer */
-	gpio_direction_output(IMX_GPIO_NR(5, 4), 1);
-	imx_iomux_v3_setup_multiple_pads(i2c3_pads, ARRAY_SIZE(i2c3_pads));
-#ifndef CONFIG_SYS_FLASH_CFI
-	setup_i2c(2, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info2);
-#endif
-	gpio_direction_output(IMX_GPIO_NR(1, 15), 1);
-	imx_iomux_v3_setup_multiple_pads(port_exp, ARRAY_SIZE(port_exp));
+//#ifdef CONFIG_VIDEO_IPUV3
+//    setup_display;
+//#endif
 
-#ifdef CONFIG_VIDEO_IPUV3
-	setup_display();
-#endif
-	setup_iomux_eimnor();
 	return 0;
 }
 

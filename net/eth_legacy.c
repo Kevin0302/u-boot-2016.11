@@ -242,6 +242,7 @@ int eth_initialize(void)
 	eth_devices = NULL;
 	eth_current = NULL;
 	eth_common_init();
+
 	/*
 	 * If board-specific initialization exists, call it.
 	 * If not, call a CPU-specific one

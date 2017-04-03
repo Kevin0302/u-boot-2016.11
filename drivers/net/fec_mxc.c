@@ -100,7 +100,6 @@ static int fec_mdio_read(struct ethernet_regs *eth, uint8_t phyAddr,
 
 	writel(FEC_MII_DATA_ST | FEC_MII_DATA_OP_RD | FEC_MII_DATA_TA |
 			phy | reg, &eth->mii_data);
-
 	/*
 	 * wait for the related interrupt
 	 */
@@ -123,6 +122,7 @@ static int fec_mdio_read(struct ethernet_regs *eth, uint8_t phyAddr,
 	val = (unsigned short)readl(&eth->mii_data);
 	debug("%s: phy: %02x reg:%02x val:%#x\n", __func__, phyAddr,
 			regAddr, val);
+
 	return val;
 }
 
@@ -149,6 +149,7 @@ static void fec_mii_setspeed(struct ethernet_regs *eth)
 #ifdef FEC_QUIRK_ENET_MAC
 	speed--;
 #endif
+
 	writel(speed << 1 | hold << 8, &eth->mii_speed);
 	debug("%s: mii_speed %08x\n", __func__, readl(&eth->mii_speed));
 }
@@ -537,6 +538,7 @@ static int fec_open(struct eth_device *edev)
 
 static int fec_init(struct eth_device *dev, bd_t* bd)
 {
+    printf("this is func: %s\n", __func__);
 	struct fec_priv *fec = (struct fec_priv *)dev->priv;
 	uint32_t mib_ptr = (uint32_t)&fec->eth->rmon_t_drop;
 	int i;
@@ -1085,6 +1087,7 @@ struct mii_dev *fec_get_miibus(uint32_t base_addr, int dev_id)
 		return NULL;
 	}
 	fec_mii_setspeed(eth);
+
 	return bus;
 }
 
@@ -1109,26 +1112,20 @@ int fecmxc_initialize_multi(bd_t *bd, int dev_id, int phy_id, uint32_t addr)
 	debug("eth_init: fec_probe(bd, %i, %i) @ %08x\n", dev_id, phy_id, addr);
 	bus = fec_get_miibus(base_mii, dev_id);
 
-    /* Print some information about miibus */
-    printf("Eth Name: %s\n", bus->name);
-    printf("Eth phy mask: 0x%x\n", bus->phy_mask);
-
-
-
-
-
-
 	if (!bus)
 		return -ENOMEM;
+
 #ifdef CONFIG_PHYLIB
 	phydev = phy_find_by_mask(bus, 1 << phy_id, PHY_INTERFACE_MODE_RGMII);
+
 	if (!phydev) {
+
+        printf("no available phydev!\n");
 		mdio_unregister(bus);
 		free(bus);
 		return -ENOMEM;
 	}
 
-    printf("######################################################################\n");
 	ret = fec_probe(bd, dev_id, addr, bus, phydev);
 #else
 	ret = fec_probe(bd, dev_id, addr, bus, phy_id);

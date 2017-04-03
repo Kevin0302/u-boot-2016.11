@@ -654,7 +654,7 @@ int __weak get_phy_id(struct mii_dev *bus, int addr, int devad, u32 *phy_id)
 	/* Grab the bits from PHYIR1, and put them
 	 * in the upper half */
 	phy_reg = bus->read(bus, addr, devad, MII_PHYSID1);
-
+    
 	if (phy_reg < 0)
 		return -EIO;
 
@@ -675,9 +675,13 @@ static struct phy_device *create_phy_by_mask(struct mii_dev *bus,
 		unsigned phy_mask, int devad, phy_interface_t interface)
 {
 	u32 phy_id = 0xffffffff;
+
 	while (phy_mask) {
+
 		int addr = ffs(phy_mask) - 1;
+
 		int r = get_phy_id(bus, addr, devad, &phy_id);
+
 		/* If the PHY ID is mostly f's, we didn't find anything */
 		if (r == 0 && (phy_id & 0x1fffffff) != 0x1fffffff)
 			return phy_device_create(bus, addr, phy_id, interface);
@@ -692,11 +696,21 @@ static struct phy_device *search_for_existing_phy(struct mii_dev *bus,
 	/* If we have one, return the existing device, with new interface */
 	while (phy_mask) {
 		int addr = ffs(phy_mask) - 1;
+        
+        int i = 0;
+        for (i = 0; i < 32; i++) {
+        
+            if (bus->phymap[i])
+                printf("phymap[i] is ok\n");
+        }
+
 		if (bus->phymap[addr]) {
+
 			bus->phymap[addr]->interface = interface;
 			return bus->phymap[addr];
 		}
 		phy_mask &= ~(1 << addr);
+
 	}
 	return NULL;
 }
@@ -708,8 +722,10 @@ static struct phy_device *get_phy_device_by_mask(struct mii_dev *bus,
 	struct phy_device *phydev;
 
 	phydev = search_for_existing_phy(bus, phy_mask, interface);
+
 	if (phydev)
 		return phydev;
+
 	/* Try Standard (ie Clause 22) access */
 	/* Otherwise we have to try Clause 45 */
 	for (i = 0; i < 5; i++) {
@@ -725,6 +741,7 @@ static struct phy_device *get_phy_device_by_mask(struct mii_dev *bus,
 	while (phy_mask) {
 		int addr = ffs(phy_mask) - 1;
 		debug("%d ", addr);
+		printf("%d ", addr);
 		phy_mask &= ~(1 << addr);
 	}
 	debug("not found\n");
@@ -799,6 +816,7 @@ int phy_reset(struct phy_device *phydev)
 
 int miiphy_reset(const char *devname, unsigned char addr)
 {
+    printf("this is func: %s\n", __func__);
 	struct mii_dev *bus = miiphy_get_dev_by_name(devname);
 	struct phy_device *phydev;
 
@@ -851,6 +869,7 @@ struct phy_device *phy_connect(struct mii_dev *bus, int addr,
 		struct eth_device *dev, phy_interface_t interface)
 #endif
 {
+    printf("this is func: %s\n", __func__);
 	struct phy_device *phydev;
 
 	phydev = phy_find_by_mask(bus, 1 << addr, interface);
@@ -866,6 +885,7 @@ struct phy_device *phy_connect(struct mii_dev *bus, int addr,
  */
 int phy_startup(struct phy_device *phydev)
 {
+    printf("this is func: %s\n", __func__);
 	if (phydev->drv->startup)
 		return phydev->drv->startup(phydev);
 
@@ -896,6 +916,8 @@ int phy_shutdown(struct phy_device *phydev)
 int phy_get_interface_by_name(const char *str)
 {
 	int i;
+
+    printf("this is func: %s\n", __func__);
 
 	for (i = 0; i < PHY_INTERFACE_MODE_COUNT; i++) {
 		if (!strcmp(str, phy_interface_strings[i]))

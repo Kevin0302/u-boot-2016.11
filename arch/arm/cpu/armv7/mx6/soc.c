@@ -502,6 +502,11 @@ void imx_get_mac_from_fuse(int dev_id, unsigned char *mac)
 		value = readl(&fuse->mac_addr1);
 		mac[4] = value >> 24 ;
 		mac[5] = value >> 16 ;
+
+        int i = 0;
+
+        for (i = 0; i < 6; i++)
+            printf("mac%d: %x\n", i, mac[i]);
 		
 	} else {
 		u32 value = readl(&fuse->mac_addr1);

@@ -377,7 +377,7 @@ int stdio_add_devices(void)
 	drv_lcd_init ();
 # endif
 # if defined(CONFIG_VIDEO) || defined(CONFIG_CFB_CONSOLE)
-	drv_video_init ();
+	//drv_video_init ();
 # endif
 #endif /* CONFIG_DM_VIDEO */
 #if defined(CONFIG_KEYBOARD) && !defined(CONFIG_DM_KEYBOARD)

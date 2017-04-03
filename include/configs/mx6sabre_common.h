@@ -29,7 +29,7 @@
 #define IMX_FEC_BASE			ENET_BASE_ADDR
 #define CONFIG_FEC_XCV_TYPE		RGMII
 #define CONFIG_ETHPRIME			"FEC"
-#define CONFIG_FEC_MXC_PHYADDR		0x04
+#define CONFIG_FEC_MXC_PHYADDR		0x00
 
 #define CONFIG_PHYLIB
 #define CONFIG_PHY_ATHEROS
@@ -68,6 +68,7 @@
 #define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
+    "ethaddr=08:00:3e:26:0a:5c\0" \
 	"script=boot.scr\0" \
 	"image=zImage\0" \
 	"fdt_file=undefined\0" \

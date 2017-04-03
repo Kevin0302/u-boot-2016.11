@@ -111,7 +111,8 @@ ENTRY(_main)
 	ldr	r9, [r9, #GD_BD]		/* r9 = gd->bd */
 	sub	r9, r9, #GD_SIZE		/* new GD is below bd */
 
-	adr	lr, here
+#if 1
+    adr	lr, here
 	ldr	r0, [r9, #GD_RELOC_OFF]		/* r0 = gd->reloc_off */
 	add	lr, lr, r0
 #if defined(CONFIG_CPU_V7M)
@@ -157,6 +158,8 @@ clbss_l:cmp	r0, r1			/* while not at end of BSS */
 	strlo	r2, [r0]		/* clear 32-bit BSS word */
 	addlo	r0, r0, #4		/* move to next */
 	blo	clbss_l
+#endif
+
 #endif
 
 #if ! defined(CONFIG_SPL_BUILD)

@@ -90,11 +90,9 @@ DECLARE_GLOBAL_DATA_PTR;
  */
 __weak void coloured_LED_init(void)
 {
-    printf("Enter func %s\n", __func__);
 }
 __weak void red_led_on(void) 
 {
-    printf("Enter func %s\n", __func__);
 }
 __weak void red_led_off(void) {}
 __weak void green_led_on(void) {}
@@ -172,8 +170,9 @@ static int display_text_info(void)
 
 	debug("U-Boot code: %08lX -> %08lX  BSS: -> %08lX\n",
 		text_base, bss_start, bss_end);
-	printf("U-Boot code: %08lX -> %08lX  BSS: -> %08lX\n",
-		text_base, bss_start, bss_end);
+
+	printf("U-Boot code: text_base: %08lX -> bss_start: %08lX  BSS: -> bss_end: %08lX\n----------%s",
+		text_base, bss_start, bss_end, __func__);
 #endif
 
 #ifdef CONFIG_USE_IRQ
@@ -241,10 +240,10 @@ static int show_dram_config(void)
 
 __weak void dram_init_banksize(void)
 {
-    printf("Enter func %s\n", __func__);
 #if defined(CONFIG_NR_DRAM_BANKS) && defined(CONFIG_SYS_SDRAM_BASE)
 	gd->bd->bi_dram[0].start = CONFIG_SYS_SDRAM_BASE;
 	gd->bd->bi_dram[0].size = get_effective_memsize();
+    printf("Enter func %s\n", __func__);
 #endif
 }
 
@@ -350,10 +349,12 @@ __weak phys_size_t board_reserve_ram_top(phys_size_t ram_size)
 static int setup_dest_addr(void)
 {
 	debug("Monitor len: %08lX\n", gd->mon_len);
+	printf("Monitor len: %08lX\n", gd->mon_len);
 	/*
 	 * Ram is setup, size stored in gd !!
 	 */
 	debug("Ram size: %08lX\n", (ulong)gd->ram_size);
+	printf("Ram size: %08lX\n", (ulong)gd->ram_size);
 #ifdef CONFIG_SYS_MEM_RESERVE_SECURE
 	/* Reserve memory for secure MMU tables, and/or security monitor */
 	gd->ram_size -= CONFIG_SYS_MEM_RESERVE_SECURE;
@@ -374,6 +375,8 @@ static int setup_dest_addr(void)
 	 */
 	gd->ram_size = board_reserve_ram_top(gd->ram_size);
 
+    printf("reserve ram size: %08lX\n", gd->ram_size);
+
 #ifdef CONFIG_SYS_SDRAM_BASE
 	gd->ram_top = CONFIG_SYS_SDRAM_BASE;
 #endif
@@ -381,6 +384,7 @@ static int setup_dest_addr(void)
 	gd->ram_top = board_get_usable_ram_top(gd->mon_len);
 	gd->relocaddr = gd->ram_top;
 	debug("Ram top: %08lX\n", (ulong)gd->ram_top);
+    printf("Ram top: %08lX\n", (ulong)gd->ram_top);
 #if defined(CONFIG_MP) && (defined(CONFIG_MPC86xx) || defined(CONFIG_E500))
 	/*
 	 * We need to make sure the location we intend to put secondary core
@@ -437,7 +441,8 @@ static int reserve_pram(void)
 static int reserve_round_4k(void)
 {
 	gd->relocaddr &= ~(4096 - 1);
-	return 0;
+	
+    return 0;
 }
 
 #if !(defined(CONFIG_SYS_ICACHE_OFF) && defined(CONFIG_SYS_DCACHE_OFF)) && \
@@ -454,6 +459,9 @@ static int reserve_mmu(void)
 	gd->arch.tlb_addr = gd->relocaddr;
 	debug("TLB table from %08lx to %08lx\n", gd->arch.tlb_addr,
 	      gd->arch.tlb_addr + gd->arch.tlb_size);
+	printf("TLB table from %08lx to %08lx\n", gd->arch.tlb_addr,
+	      gd->arch.tlb_addr + gd->arch.tlb_size);
+
 
 #ifdef CONFIG_SYS_MEM_RESERVE_SECURE
 	/*
@@ -470,6 +478,7 @@ static int reserve_mmu(void)
 #ifdef CONFIG_DM_VIDEO
 static int reserve_video(void)
 {
+    printf("%s\n", __func__);
 	ulong addr;
 	int ret;
 
@@ -486,6 +495,7 @@ static int reserve_video(void)
 # ifdef CONFIG_LCD
 static int reserve_lcd(void)
 {
+    printf("%s\n", __func__);
 #  ifdef CONFIG_FB_ADDR
 	gd->fb_base = CONFIG_FB_ADDR;
 #  else
@@ -597,6 +607,7 @@ static int reserve_global_data(void)
 static int reserve_fdt(void)
 {
 #ifndef CONFIG_OF_EMBED
+
 	/*
 	 * If the device tree is sitting immediately above our image then we
 	 * must relocate it. If it is embedded in the data section, then it
@@ -608,6 +619,8 @@ static int reserve_fdt(void)
 		gd->start_addr_sp -= gd->fdt_size;
 		gd->new_fdt = map_sysmem(gd->start_addr_sp, gd->fdt_size);
 		debug("Reserving %lu Bytes for FDT at: %08lx\n",
+		      gd->fdt_size, gd->start_addr_sp);
+		printf("Reserving %lu Bytes for FDT at: %08lx\n",
 		      gd->fdt_size, gd->start_addr_sp);
 	}
 #endif
@@ -625,6 +638,8 @@ static int reserve_stacks(void)
 	/* make stack pointer 16-byte aligned */
 	gd->start_addr_sp -= 16;
 	gd->start_addr_sp &= ~0xf;
+
+    printf("%s - gd->start_addr_sp: %x\n", __func__, gd->start_addr_sp);
 
 	/*
 	 * let the architecture-specific code tailor gd->start_addr_sp and
@@ -870,151 +885,139 @@ __weak int arch_cpu_init_dm(void)
 	return 0;
 }
 
-#if 0
+int test_global_data = 0x123456;
+int test_func(void)
+{
+    int test_local_data = 0x987564;
+
+    printf("test_global_data address: 0x%x\n", (int)&test_global_data);
+    printf("test_local_data address: 0x%x\n", (int)&test_local_data);
+
+    return 0;
+}
+
+int serial_init_test(void)
+{
+
+    int test_aa = 0;
+
+    printf("test_aa addr: %p\n", &test_aa);
+}
+
+
 static init_fnc_t init_sequence_f[] = {
 
-    /* Save uboot file length */
+    /* calculate uboot code size */
     setup_mon_len,
+    
+    /* Set malloc size */
     initf_malloc,
+
+    /* basic arch cpu dependent setup */
     arch_cpu_init,
-    mach_cpu_init,
+
+    ///* SoC/machine dependent CPU setup */
+    //mach_cpu_init,
+    
     initf_dm,
     arch_cpu_init_dm,
-    mark_bootstage,     /* need timer, go after init dm */
+    mark_bootstage,
 #if defined(CONFIG_BOARD_EARLY_INIT_F)
     board_early_init_f,
 #endif
-    timer_init,         /* Initialize timer */
+    timer_init,
 #if defined(CONFIG_BOARD_POSTCLK_INIT)
     board_postclk_init,
 #endif
+#if defined(CONFIG_SYS_FSL_CLK) || defined(CONFIG_M68K)
     get_clocks,
+#endif
+    /* initialize environment */
     env_init,
-	init_baud_rate,		/* initialze baudrate settings */
-	serial_init,		/* serial communications setup */
-	console_init_f,		/* stage 1 init of console */
-	display_options,	/* say that we are here */
-	display_text_info,	/* show debugging info if required */
+    
+    /* initialize baudrate settings */
+    init_baud_rate,
+
+    /* serial communications setup */
+    serial_init,
+
+    /* stage 1 init of console */
+    console_init_f,
+
+    /* say that we are here */
+    display_options,
+
+    /* show debugging info if required */
+    display_text_info,
+
+    /* display cpu info(and speed) */
     print_cpuinfo,
+
 #if defined(CONFIG_DISPLAY_BOARDINFO)
     show_board_info,
 #endif
-    INIT_FUNC_WATCHDOG_INIT
-    INIT_FUNC_WATCHDOG_RESET
+
     announce_dram_init,
+#if defined(CONFIG_ARM) || defined(CONFIG_X86) || defined(CONFIG_NDS32) || \
+        defined(CONFIG_MICROBLAZE) || defined(CONFIG_AVR32)
     dram_init,
-	/*
-	 * Now that we have DRAM mapped and working, we can
-	 * relocate the code and continue running from DRAM.
-	 *
-	 * Reserve memory at end of RAM for (top down in that order):
-	 *  - area that won't get touched by U-Boot and Linux (optional)
-	 *  - kernel log buffer
-	 *  - protected RAM
-	 *  - LCD framebuffer
-	 *  - monitor code
-	 *  - board info struct
-	 */
+#endif
+
+    /*
+     * Now that we have DRAM mapped and working, we can 
+     * relocate the code and continue running from DRAM.
+     *
+     * Reserve memory at end of RAM for (top down in that order):
+     * - area thar won't get touched by U-Boot and Linux (optional)
+     * - kernel log buffer
+     * - protected RAM
+     * - LCD framebuffer
+     * - monitor code
+     * - board info struct
+     */
     setup_dest_addr,
+
     reserve_round_4k,
+#if !(defined(CONFIG_SYS_ICACHE_OFF) && defined(CONFIG_SYS_DCACHE_OFF) && \
+        defined(CONFIG_ARM))
+    reserve_mmu,
+#endif
+
+#if !defined(CONFIG_BLACKFIN) && !defined(CONFIG_XTENSA)
     reserve_uboot,
+#endif
 #ifndef CONFIG_SPL_BUILD
     reserve_malloc,
     reserve_board,
 #endif
     setup_machine,
     reserve_global_data,
+    reserve_fdt,
+    reserve_stacks,
     setup_dram_config,
     show_dram_config,
     display_new_sp,
+    reloc_fdt,
     setup_reloc,
 
-
-    NULL,
-};
-
-
-
-
-
-
-
-
-
-
-#else
-static init_fnc_t init_sequence_f[] = {
-	setup_mon_len,
-	initf_malloc,
-	arch_cpu_init,		/* basic arch cpu dependent setup */
-	mach_cpu_init,		/* SoC/machine dependent CPU setup */
-	initf_dm,
-	arch_cpu_init_dm,
-	mark_bootstage,		/* need timer, go after init dm */
-#if defined(CONFIG_BOARD_EARLY_INIT_F)
-	board_early_init_f,
-#endif
-#if defined(CONFIG_ARM) || defined(CONFIG_MIPS) || \
-		defined(CONFIG_BLACKFIN) || defined(CONFIG_NDS32) || \
-		defined(CONFIG_SPARC)
-	timer_init,		/* initialize timer */
-#endif
-#if defined(CONFIG_BOARD_POSTCLK_INIT)
-	board_postclk_init,
-#endif
-#if defined(CONFIG_SYS_FSL_CLK) || defined(CONFIG_M68K)
-	get_clocks,
-#endif
-	env_init,		/* initialize environment */
-	init_baud_rate,		/* initialze baudrate settings */
-	serial_init,		/* serial communications setup */
-	console_init_f,		/* stage 1 init of console */
-	display_options,	/* say that we are here */
-	display_text_info,	/* show debugging info if required */
-	print_cpuinfo,		/* display cpu info (and speed) */
-#if defined(CONFIG_DISPLAY_BOARDINFO)
-	show_board_info,
-#endif
-	announce_dram_init,
-	/* TODO: unify all these dram functions? */
-#if defined(CONFIG_ARM) || defined(CONFIG_X86) || defined(CONFIG_NDS32) || \
-		defined(CONFIG_MICROBLAZE) || defined(CONFIG_AVR32)
-	dram_init,		/* configure available RAM banks */
-#endif
-	/*
-	 * Now that we have DRAM mapped and working, we can
-	 * relocate the code and continue running from DRAM.
-	 *
-	 * Reserve memory at end of RAM for (top down in that order):
-	 *  - area that won't get touched by U-Boot and Linux (optional)
-	 *  - kernel log buffer
-	 *  - protected RAM
-	 *  - LCD framebuffer
-	 *  - monitor code
-	 *  - board info struct
-	 */
-	setup_dest_addr,
-	reserve_round_4k,
-#if !(defined(CONFIG_SYS_ICACHE_OFF) && defined(CONFIG_SYS_DCACHE_OFF)) && \
-		defined(CONFIG_ARM)
-	reserve_mmu,
-#endif
-#if !defined(CONFIG_BLACKFIN) && !defined(CONFIG_XTENSA)
-	reserve_uboot,
-#endif
-#ifndef CONFIG_SPL_BUILD
-	reserve_malloc,
-	reserve_board,
-#endif
-	setup_machine,
-	reserve_global_data,
-	setup_dram_config,
-	show_dram_config,
-	display_new_sp,
-	setup_reloc,
 	NULL,
 };
-#endif
+
+void test_relocate_func(void)
+{
+    printf("Hello Kitty!\n");
+}
+
+static void *test_func_val = test_relocate_func;
+static int test_val = 10;
+
+void rel_dyn_test(void)
+{
+    test_val = 20;
+    printf("test = 0x%x\n", test_relocate_func);
+    printf("test_func = 0x%x\n", test_func_val);
+    test_relocate_func();
+}
 
 void board_init_f(ulong boot_flags)
 {
@@ -1097,3 +1100,23 @@ void board_init_f_r(void)
 	hang();
 }
 #endif /* CONFIG_X86 */
+
+
+
+#if 0
+void zl_test_func(void)
+{
+    printf("test func\n");
+}
+
+static void *ptest_func_val = zl_test_func;
+static int test_val = 10;
+
+void rel_dyn_test()
+{
+    test_val = 20;
+    printf("test = 0x%x\n", zl_test_func);
+    printf("test_fun = 0x%x\n", ptest_func_val);
+    zl_test_func();
+}
+#endif

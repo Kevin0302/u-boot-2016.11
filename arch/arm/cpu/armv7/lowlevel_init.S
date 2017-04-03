@@ -52,7 +52,7 @@ ENTRY(lowlevel_init)
     mov r1,#0x00f00000
     str r1,[r0]
     ldr r0,=0x20a4000
-    mov r1,#0x00000000
+    mov r1,#0x00f00000
     str r1,[r0]
 
 	/*
